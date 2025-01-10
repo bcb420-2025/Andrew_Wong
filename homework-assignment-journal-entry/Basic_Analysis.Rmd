@@ -1,0 +1,41 @@
+---
+title: "Basic Analysis"
+output: html_notebook
+---
+
+<!-- This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.  -->
+
+<!-- Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.  -->
+
+Instructions: 
+Use your image to create a basic RNotebook that does the following-
+
+    create a 5 by 10 matrix of random integers
+    define column names as cond1, cond2, cond3, cond4, cond5, ctrl1, ctrl2, ctrl3, ctrl4, ctrl5
+    define row names as gene1, gene2, gene3 ...
+    Compute the fold change for each gene.
+
+
+```{r}
+# Matrix construction
+set.seed(123)  # For reproducibility
+data_matrix <- matrix(sample(1:100, 50, replace = TRUE), nrow = 5, ncol = 10)
+colnames(data_matrix) <- c('cond1', 'cond2', 'cond3', 'cond4', 'cond5',
+                           'ctrl1', 'ctrl2', 'ctrl3', 'ctrl4', 'ctrl5')
+rownames(data_matrix) <- paste0('gene', 1:5)
+data_matrix
+
+# Assuming fold change as mean of condition columns divided by mean of control columns
+cond_means <- rowMeans(data_matrix[, 1:5])
+ctrl_means <- rowMeans(data_matrix[, 6:10])
+fold_change <- cond_means / ctrl_means
+fold_change_df <- data.frame(Gene = rownames(data_matrix), FoldChange = fold_change)
+fold_change_df
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
