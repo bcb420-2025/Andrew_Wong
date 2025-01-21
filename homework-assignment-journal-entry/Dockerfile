@@ -1,5 +1,6 @@
 # Using the course base Docker image
-FROM risserlin/bcb420-base-image:winter2024
+FROM risserlin/bcb420-base-image:winter2025-arm64
+# arm64 for m-series chips
 
 # Installing the additional R packages
 RUN R -e "install.packages(c('DESeq2', 'pheatmap', 'enrichplot'), repos='http://cran.rstudio.com/')"
