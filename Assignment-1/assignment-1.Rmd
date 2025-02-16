@@ -1,0 +1,114 @@
+---
+title: "Assignment 1"
+author: "Andrew Wong"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    fig_caption: true
+bibliography: assignment1.bib
+csl: biomed-central.csl
+---
+
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Data Download](#data-download)
+3. [Quality Assessment](#quality-assessment)
+4. [Mapping to HUGO](#mapping-to-hugo)
+5. [Cleaning the Data](#cleaning-the-data)
+6. [Normalization](#normalization)
+7. [Interpretation & Questions](#interpretation--questions)
+
+# Introduction
+
+Crohn’s disease (CD) is a chronic inflammatory bowel disease (IBD) that affects the gastrointestinal tract, often leading to severe complications such as strictures, fistulas, and malabsorption [@kugathasan_2017a]. While the exact cause remains unknown, CD is believed to result from a combination of genetic susceptibility, immune dysregulation, and environmental triggers [@kugathasan_2017a]. Current treatments, including biologics such as anti-tumor necrosis factor (TNF) agents, help manage symptoms but are not universally effective, with many patients failing to respond or developing resistance over time [@kugathasan_2017a; @nwokafor_2019].
+
+After some deliberation, I sought to analyze a transcriptomic dataset related to Crohn’s disease, specifically focusing on gene expression differences in nonlesional ileal tissue from CD patients. I searched the GEO database using the keyword "Crohn's disease", while applying filters for bulk RNA sequencing and "Homo sapiens" to ensure the dataset was both bulk RNA-seq and human-derived. The exact query I used is noted here: (Homo sapiens[Organism]) AND (RNA-seq[Title] OR bulk RNA-seq[Title]) AND (Crohn[Title] OR crohn[Title]).
+
+The dataset I identified, GSE215924, is a dataset from a study investigating transcriptomic alterations in the uninflamed ileum of Crohn’s disease (CD) patients compared to non-CD controls [@lee_2025]. This dataset intrigued me because, despite appearing histologically normal, nonlesional intestinal tissue in CD may still exhibit gene expression changes indicative of immune dysregulation and early disease processes [@lee_2025]. As someone with IBD, my personal interest is to discover more about IBD through the analysis of this data set.
+
+The dataset comprises 79 total samples: 70 from Crohn’s disease patients and 9 from non-CD controls (patients with right colon cancer, colorectal cancer that occurs in the right side of the colon). Right colon cancer controls have been used in past studies when examining ileal transcriptomes in Crohn’s disease and IBD. This is because ileal tissue from cancer patients tends to be histologically normal, meaning it can serve as a "healthy" control.
+
+RNA-seq was performed on macroscopically uninflamed ileal tissue resected from these individuals. For this report, I will focus on a subset of samples, comparing CD patients with non-CD controls to assess differentially expressed genes (DEGs).
+
+# Data Download
+Citations for the noted libraries are as follows: GEOquery [@davis_2007]; edgeR, [@yunshunchen_2017]; and biomaRt [@smedley_2009].
+```{r setup, message=FALSE, warning=FALSE}
+# Load libraries
+library("GEOquery")  # retreiving GEO data
+library("edgeR")     # filtering, normalization
+library("biomaRt")   # mapping Ensembl IDs to HUGO symbols 
+
+# Set a working directory (inside Docker, or local)
+# setwd("/home/rstudio/projects")
+
+# For reproducibility
+set.seed(2024)
+```
+
+
+```{r download-gse, message=FALSE}
+gse_id <- "GSE215924"
+
+gse <- getGEO(gse_id, GSEMatrix = FALSE)
+
+# textual summary from GEO describing the study
+gse@header$summary
+
+# Check total number of samples
+length(gsms_list) # Returns 79 as expected
+```
+The summary notes, "To identify the dysregulated molecular pathways and core genes associated with the chronic and progressive course of CD, we evaluated the gene expression profiles of uninflamed small bowel tissues from CD patients who underwent small bowel resection and compared the results with those of patients with right colon cancer, who served as uninflamed non-CD controls."
+
+After downloading the data, I must first inspect `sample_info` to see how the “CD vs. non-CD” status is encoded. 
+```{r sample-annotation}
+# Extract sample objects
+gsms_list <- gse@gsms
+
+
+# Reformat each sample’s annotation into a row of a data frame
+sample_info <- do.call(
+  rbind,
+  lapply(gsms_list, function(x) {
+    # For each GSM object, gather relevant fields. 
+    # desc is concatenated metadata fields
+    c(
+      title = x@header$title,
+      desc  = paste0(x@header$characteristics_ch1, collapse = "; ")
+    )
+  })
+)
+
+sample_info <- as.data.frame(sample_info)
+
+# Note: The row names are the GSM IDs
+head(sample_info)
+
+#Minimal example of control vs non-control patient encoding
+# GSM6647567          CD84, CD participants, Ileum tissue tissue: Ileum; Sex: Female; disease state: Crohn's disease
+# GSM6647568 Non_CD01, Control participants, Ileum tissue      tissue: Ileum; Sex: Male; disease state: Colon cancer
+```
+
+The sample_info provided a minimal example of how control and non-control patients are encoded. I then filtered for CD and control patients to filter out any metadata objects or controls that might be present in the data. 
+
+```{r download-tpm, message=FALSE}
+# Downloading supplemental files
+getGEOSuppFiles("GSE215924", fetch_files = TRUE)
+
+matrix_filename <- "GSE215924_Bulk_RNA_seq_TPM_matrix.txt.gz"
+data_path <- file.path("GSE215924", matrix_filename)
+
+#    - Assuming first column = gene identifiers, first row = sample headers
+#    - row.names=1 if gene IDs are in the first column
+tpm_data <- read.delim(data_path, 
+                       header=TRUE, 
+                       row.names=1, 
+                       check.names=FALSE)
+
+dim(tpm_data)
+head(tpm_data[, 1:4])
+
+```
+
+

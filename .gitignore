@@ -47,3 +47,6 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+Assignment-1/commands.txt
+Assignment-1/projects.Rproj
+Assignment-1/GSE215924/GSE215924_Bulk_RNA_seq_TPM_matrix.txt.gz
