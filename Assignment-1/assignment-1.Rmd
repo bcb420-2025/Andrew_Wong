@@ -7,8 +7,11 @@ output:
     toc: true
     toc_depth: 2
     fig_caption: true
-bibliography: assignment1.bib
-csl: biomed-central.csl
+  pdf_document:
+    toc: true
+    toc_depth: '2'
+bibliography: assignment-1.bib
+csl: "biomed-central.csl"
 ---
 
 ## Table of Contents
@@ -21,7 +24,7 @@ csl: biomed-central.csl
 
 # Introduction
 
-Crohn’s disease (CD) is a chronic inflammatory bowel disease (IBD) that affects the gastrointestinal tract, often leading to complications such as strictures, fistulas, and nutrient malabsorption [@kugathasan_2017a]. The global incidence of CD has risen sharply in recent decades [@coward_2024], particularly in urbanized regions, suggesting that environmental and dietary factors play a critical role in disease development and progression [@braun_2024; @coward_2024]. While genetic predisposition contributes to susceptibility [@kugathasan_2017a], increasing evidence highlights the impact of diet, microbiome alterations, and immune dysregulation in CD pathogenesis [@braun_2024; @coward_2024].
+Crohn’s disease (CD) is a chronic inflammatory bowel disease (IBD) that affects the gastrointestinal tract, often leading to complications such as strictures, fistulas, and nutrient malabsorption [@kugathasan_2017b]. The global incidence of CD has risen sharply in recent decades [@coward_2024], particularly in urbanized regions, suggesting that environmental and dietary factors play a critical role in disease development and progression [@braun_2024; @coward_2024]. While genetic predisposition contributes to susceptibility [@kugathasan_2017b], increasing evidence highlights the impact of diet, microbiome alterations, and immune dysregulation in CD pathogenesis [@braun_2024; @coward_2024].
 
 For this project, I sought to analyze transcriptomic data relevant to CD. To identify a suitable dataset, I searched the GEO database using the keywords “Crohn’s disease” while filtering for bulk RNA sequencing and human-derived samples. My goal was to explore how environmental exposures and diet might influence transcriptomic signatures in CD, building upon recent research linking urbanization, diet, and microbiome composition to immune and metabolic pathways associated with the disease [@braun_2024].
 
