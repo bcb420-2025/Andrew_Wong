@@ -60,7 +60,7 @@ cat("Number of samples:", length(gsms_list), "\n")
 The summary notes, "The Study Of Urban and Rural Crohn disease Evolution (SOURCE, n=380) characterized exposures, diet, and host and microbial factors in rural and urban Chinese controls and newly diagnosed Crohn Disease (CD), and in treatment-naïve Israeli CD and controls. We considered diet-omics domains simultaneously to detect complex interactions in the gut to prioritize potential beneficial and pathogenic factors."
 [1] 40
 
-After downloading the data, I must first inspect `sample_metadata` to see how the “CD vs. non-CD” status is encoded. 
+After downloading the data, we inspect `sample_metadata` to see how the “CD vs. non-CD” status is encoded. 
 ```{r message=FALSE}
 
 # For each GSM object, we create a vector:
@@ -94,15 +94,13 @@ colnames(sample_metadata) <- c(
 
 # Row names are the GSM IDs by default
 head(sample_metadata)
-
-
-#Minimal Control vs Non-Control Example
-
-# rowname; title; desc
-# GSM7438873 C487_TI2 patient id: C487; country: China; diagosis: Control; patient group: Rural; gender: female; age: 49; bmi: 20.44; crp mg_l: 2.67
-# GSM7438874 D605_TI1           patient id: D605; country: China; diagosis: CD; patient group: CD; gender: male; age: 29; bmi: 20.31; crp mg_l: 4.65
-
 ```
+Minimal Control vs Non-Control Example
+
+rowname; title; desc
+GSM7438873 C487_TI2 patient id: C487; country: China; diagosis: Control; patient group: Rural; gender: female; age: 49; bmi: 20.44; crp mg_l: 2.67
+GSM7438874 D605_TI1           patient id: D605; country: China; diagosis: CD; patient group: CD; gender: male; age: 29; bmi: 20.31; crp mg_l: 4.65
+
 
 We can print out the dataframe as the following:
 ```{r}
@@ -171,7 +169,7 @@ To examine the quality of the data, and whether it is suitable for this assignme
 library_sizes <- colSums(raw_counts_matrix)
 boxplot(library_sizes, main = "Library Size Distribution", ylab = "Total Counts")
 
-plot_densities_by_sample <- function(dat, xlab, ylab, main) {
+plot_sample_densities <- function(dat, xlab, ylab, main) {
   densities_by_sample <- apply(log2(dat + 1), 2, density)
   x_lim <- range(sapply(densities_by_sample, function(x) x$x))
   y_lim <- range(sapply(densities_by_sample, function(x) x$y))
@@ -189,7 +187,7 @@ plot_densities_by_sample <- function(dat, xlab, ylab, main) {
          col = cols, lty = 1, cex = 0.5, ncol = 2, xpd = TRUE)
 }
 
-plot_densities_by_sample(cpm(raw_counts_matrix), 
+plot_sample_densities(cpm(raw_counts_matrix), 
                          xlab = "CPM", 
                          ylab = "Density", 
                          main = "Density Plot of Raw Counts (Before Filtering)")
@@ -236,7 +234,7 @@ cat("Total genes before filtering:", nrow(raw_counts_matrix), "\n")
 cat("Genes with zero counts in all samples before:", zero_count_genes, "\n")
 cat("Genes with very low expression (CPM < 1 in all samples):", low_expressed_genes, "\n")
 
-plot_densities_by_sample(cpm(filtered_counts), 
+plot_sample_densities(cpm(filtered_counts), 
                          xlab = "log2 CPM", 
                          ylab = "Density", 
                          main = "Density Plot of Filtered Counts")
@@ -281,7 +279,7 @@ log_normalized_cpm <- log2(norm_cpm + 1) # +1 for no log of 0
 
 
 # Density plot 
-plot_densities_by_sample(norm_cpm, 
+plot_sample_densities(norm_cpm, 
                          xlab = "log2 CPM", 
                          ylab = "Density", 
                          main = "Density Plot of Normalized Counts")
