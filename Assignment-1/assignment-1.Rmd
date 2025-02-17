@@ -289,14 +289,14 @@ plot_densities_by_sample(norm_cpm,
                          ylab = "Density", 
                          main = "Density Plot of Normalized Counts")
 
-# Boxplot: Distribution of Samples After Normalization
+# Boxplot
 boxplot(log2(norm_cpm + 1), xlab = "", ylab = "log2 CPM",
         las = 2, cex = 0.5, cex.lab = 1, cex.axis = 0.5, 
         main = "Boxplots of Counts After Normalization")
 mtext("Samples", side = 1, line = 4)
 
 
-# MDS Plot: Checking Sample Clustering
+# MDS Plot
 limma::plotMDS(dge, labels = NULL, 
                main = "MDS Plot of CD vs. Control Samples",
                pch = 1, cex = 1.5, 
@@ -304,12 +304,12 @@ limma::plotMDS(dge, labels = NULL,
 legend("topright", legend = levels(factor(sample_info$diagnosis)), 
        pch = 1, col = c("blue", "darkgreen"), bty = "n", cex = 0.75)
 
-# BCV Plot: Dispersion Estimation
+# BCV Plot
 dge <- estimateDisp(dge, model.matrix(~ factor(sample_info$diagnosis)))
 plotBCV(dge, col.tagwise = "black", col.common = "red", 
                main = "BCV Plot for Normalized Counts (Diagnosis Grouping)")
 
-# Mean-Variance Plot: Checking Negative Binomial Assumption
+# Mean-Variance Plot
 plotMeanVar(dge, show.raw.vars = TRUE, 
                    show.tagwise.vars = TRUE, NBline = TRUE, 
                    show.ave.raw.vars = TRUE, 
@@ -321,10 +321,11 @@ Density plot: The density plot looks largely the same shape as the filtered coun
 
 Box plot: The medians of each sample appear slightly closer together after TMM normalization than the original, as expected [@isserlin_2025]. Otherwise, not too many changes.
 
-MDS plot: Visualizing the similarity between samples based on their gene expression profiles, CD (Crohn’s Disease) samples (blue) and Control samples (green) form distinct clusters, indicating clear separation in gene expression patterns between conditions. The first dimension (x-axis) explains 27% of the variation, while the second (y-axis) explains 15%, meaning most of the group separation is along the x-axis. Some overlap exists, but overall, the separation suggests that differential expression analysis should yield biologically meaningful results.
+MDS plot: This plot visualizes the similarity between samples based on their gene expression profiles. Each point denotes a sample where CD (Crohn’s Disease) samples (blue) and Control samples (green) form distinct clusters, indicating clear separation in gene expression patterns between conditions. The first dimension (x-axis) explains 27% of the variation, while the second (y-axis) explains 15%, meaning most of the group separation is along the x-axis. Some overlap exists, but overall, the separation suggests that differential expression analysis should yield biologically meaningful results.
 
 BCV plot: The shape of the BCV plot suggests that genes with low expression levels have higher variability, while genes with high expression levels have lower variability. This is to be expected of quality data [@isserlin_2025]. The trend line (blue) follows a decreasing pattern as expression levels increase, which is expected in properly processed RNA-seq data. The common dispersion (red line) remains relatively stable, providing an overall estimate of variability across genes.
 
+Mean Variance plot: This plot notes the overal distribution of varaince across all genes. There is a clear positive relationship between mean expression and variance. This is expected because genes with higher expression levels tend to have higher variance in RNA-seq experiments [@isserline_2025].
 
 # Mapping to HUGO
 
@@ -370,7 +371,7 @@ Next, we retrieve HGNC symbols for a list of Entrez Gene IDs extracted from the 
 ```{r}
 # BiocManager::install("biomaRt")
 
-Entrez-to-HGNC <- getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
+entrez-to-hgnc <- getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
                        filters = "entrezgene_id",
                        values = rownames(norm_cpm),
                        mart = ensembl_human)
@@ -381,7 +382,7 @@ Entrez-to-HGNC <- getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
 Then, we merge the Entrez-to-HGNC mapping with the normalized gene expression data , matching on Entrez Gene IDs, and keep all rows from norm_cpm.
 ```{r}
 # Merge the mapping with normalized counts.
-norm_cpm_annot <- merge(Entrez-to-HGNC, 
+norm_cpm_annot <- merge(entrez-to-hgnc, 
                                  norm_cpm, 
                                  by.x = "entrezgene_id", 
                                  by.y = 0, 
