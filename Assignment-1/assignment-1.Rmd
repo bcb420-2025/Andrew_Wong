@@ -7,9 +7,6 @@ output:
     toc: true
     toc_depth: 2
     fig_caption: true
-  pdf_document:
-    toc: true
-    toc_depth: '2'
 bibliography: assignment-1.bib
 csl: "biomed-central.csl"
 ---
@@ -350,8 +347,8 @@ ensembl_human <- useDataset("hsapiens_gene_ensembl", mart = ensembl_mart)
 Next, we must retrieve a list of available filters in the Ensembl BioMart database, extract filters related to Entrez Gene IDs, and search for attributes related to Entrez and HGNC symbols to ensure they are available for gene ID mapping.
 ```{r}
 # Listing available filters to verify the Entrez filter
-biomart_human_filters <- listFilters(ensembl_human)
-entrez_filters <- biomart_human_filters[grep("entrez", biomart_human_filters$name),]
+ensembl_human_filters <- listFilters(ensembl_human)
+entrez_filters <- ensembl_human_filters[grep("entrez", ensembl_human_filters$name),]
 
 
 # Searching for attributes related to Entrez and HGNC
