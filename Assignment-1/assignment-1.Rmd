@@ -370,20 +370,18 @@ Next, we retrieve HGNC symbols for a list of Entrez Gene IDs extracted from the 
 ```{r}
 # BiocManager::install("biomaRt")
 
-ids_to_convert <- rownames(norm_cpm)
-
-id_conversion <- getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
+Entrez-to-HGNC <- getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
                        filters = "entrezgene_id",
-                       values = ids_to_convert,
+                       values = rownames(norm_cpm),
                        mart = ensembl_human)
 
 ```
 
 
-Then, we merge the Entrez-to-HGNC mapping (id_conversion) with the normalized gene expression data (norm_cpm), matching on Entrez Gene IDs, and keep all rows from norm_cpm.
+Then, we merge the Entrez-to-HGNC mapping with the normalized gene expression data , matching on Entrez Gene IDs, and keep all rows from norm_cpm.
 ```{r}
 # Merge the mapping with normalized counts.
-norm_cpm_annot <- merge(id_conversion, 
+norm_cpm_annot <- merge(Entrez-to-HGNC, 
                                  norm_cpm, 
                                  by.x = "entrezgene_id", 
                                  by.y = 0, 
