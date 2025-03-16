@@ -380,49 +380,26 @@ display: none;
 
 <div id="TOC">
 <ul>
-<li><a href="#table-of-contents" id="toc-table-of-contents">Table of
-Contents</a></li>
+<li><a href="#table-of-contents" id="toc-table-of-contents">Table of Contents</a></li>
 <li><a href="#introduction" id="toc-introduction">Introduction</a></li>
-<li><a href="#data-download" id="toc-data-download">Data
-Download</a></li>
+<li><a href="#data-download" id="toc-data-download">Data Download</a></li>
 <li><a href="#normalization" id="toc-normalization">Normalization</a></li>
-<li><a href="#mapping-to-hugo" id="toc-mapping-to-hugo">Mapping to
-HUGO</a></li>
+<li><a href="#mapping-to-hugo" id="toc-mapping-to-hugo">Mapping to HUGO</a></li>
 <li><a href="#interpretation-questions" id="toc-interpretation-questions">Interpretation &amp; Questions</a>
-<ul>
-<li><a href="#what-are-the-control-and-test-conditions-of-the-dataset" id="toc-what-are-the-control-and-test-conditions-of-the-dataset">1. What
-are the control and test conditions of the dataset?</a></li>
-<li><a href="#why-is-the-dataset-of-interest-to-you" id="toc-why-is-the-dataset-of-interest-to-you">2. Why is the dataset of
-interest to you?</a></li>
-<li><a href="#were-there-expression-values-that-were-not-unique-for-specific-genes-how-did-you-handle-these" id="toc-were-there-expression-values-that-were-not-unique-for-specific-genes-how-did-you-handle-these">3.
-Were there expression values that were not unique for specific genes?
-How did you handle these?</a></li>
-<li><a href="#were-there-expression-values-that-could-not-be-mapped-to-current-hugo-symbols" id="toc-were-there-expression-values-that-could-not-be-mapped-to-current-hugo-symbols">4.
-Were there expression values that could not be mapped to current HUGO
-symbols?</a></li>
-</ul></li>
-<li><a href="#how-many-outliers-were-removed" id="toc-how-many-outliers-were-removed">5. How many outliers were
-removed?</a></li>
-<li><a href="#how-did-you-handle-replicates" id="toc-how-did-you-handle-replicates">6. How did you handle
-replicates?</a></li>
-<li><a href="#what-is-the-final-coverage-of-your-dataset" id="toc-what-is-the-final-coverage-of-your-dataset">7. What is the final
-coverage of your dataset?</a></li>
+  <ul>
+    <li><a href="#what-are-the-control-and-test-conditions-of-the-dataset" id="toc-what-are-the-control-and-test-conditions-of-the-dataset">1. What are the control and test conditions of the dataset?</a></li>
+    <li><a href="#why-is-the-dataset-of-interest-to-you" id="toc-why-is-the-dataset-of-interest-to-you">2. Why is the dataset of interest to you?</a></li>
+    <li><a href="#were-there-expression-values-that-were-not-unique-for-specific-genes-how-did-you-handle-these" id="toc-were-there-expression-values-that-were-not-unique-for-specific-genes-how-did-you-handle-these">3. Were there expression values that were not unique for specific genes? How did you handle these?</a></li>
+    <li><a href="#were-there-expression-values-that-could-not-be-mapped-to-current-hugo-symbols" id="toc-were-there-expression-values-that-could-not-be-mapped-to-current-hugo-symbols">4. Were there expression values that could not be mapped to current HUGO symbols?</a></li>
+    <li><a href="#how-many-outliers-were-removed" id="toc-how-many-outliers-were-removed">5. How many outliers were removed?</a></li>
+    <li><a href="#how-did-you-handle-replicates" id="toc-how-did-you-handle-replicates">6. How did you handle replicates?</a></li>
+    <li><a href="#what-is-the-final-coverage-of-your-dataset" id="toc-what-is-the-final-coverage-of-your-dataset">7. What is the final coverage of your dataset?</a></li>
+  </ul>
+</li>
 </ul>
 </div>
+  
 
-<div id="table-of-contents" class="section level2">
-<h2>Table of Contents</h2>
-<ol style="list-style-type: decimal">
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#data-download">Data Download</a></li>
-<li><a href="#quality-assessment">Quality Assessment and
-Cleaning</a></li>
-<li><a href="#normalization">Normalization</a></li>
-<li><a href="#mapping-to-hugo">Mapping to HUGO</a></li>
-<li><a href="#interpretation--questions">Interpretation &amp;
-Questions</a></li>
-</ol>
-</div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>Crohn’s disease (CD) is a chronic inflammatory bowel disease (IBD)
@@ -1282,7 +1259,7 @@ norm_cpm_annot_mapped &lt;-
 norm_cpm_annot_mapped[norm_cpm_annot_mapped$hgnc_symbol != ““,]</p>
 </div>
 </div>
-<div id="how-many-outliers-were-removed" class="section level1">
+<div id="how-many-outliers-were-removed" class="section level2">
 <h1>5. How many outliers were removed?</h1>
 <p>This answer assumes outliers pertain to the low expression genes that
 were filtered out <span class="citation">[8]</span> or samples with a
@@ -1293,14 +1270,14 @@ removed.</p>
 <p>No samples noted a library size large enough to be removed from the
 analysis.</p>
 </div>
-<div id="how-did-you-handle-replicates" class="section level1">
+<div id="how-did-you-handle-replicates" class="section level2">
 <h1>6. How did you handle replicates?</h1>
 <p>Replicates were maintained as individual samples throughout the
 analysis. I retained all 40 samples (20 CD and 20 Control) in the count
 matrix so that the within-group biological variability is preserved for
 downstream differential expression analysis.</p>
 </div>
-<div id="what-is-the-final-coverage-of-your-dataset" class="section level1">
+<div id="what-is-the-final-coverage-of-your-dataset" class="section level2">
 <h1>7. What is the final coverage of your dataset?</h1>
 <p>The output of the code below noted 40 samples and 16408 genes. Hence,
 the coverage is 16408 genes.</p>

@@ -105,6 +105,7 @@ GSM7438874 D605_TI1           patient id: D605; country: China; diagosis: CD; pa
 We can print out the dataframe as the following:
 ```{r}
 sample_metadata
+save(sample_metadata, file = "A1_all_sample_annotations.RData")
 ```
 
 
@@ -467,20 +468,30 @@ num_NA <- sum(is.na(norm_cpm_annot$hgnc_symbol))
 norm_cpm_annot_mapped <- norm_cpm_annot[!is.na(norm_cpm_annot$hgnc_symbol),]
 norm_cpm_annot_mapped <- norm_cpm_annot_mapped[norm_cpm_annot_mapped$hgnc_symbol != "",]
 
-# 5. How many outliers were removed?
+## 5. How many outliers were removed?
 This answer assumes outliers pertain to the low expression genes that were filtered out [@isserlin_2025] or samples with a much larger library size.
 
 With regards to low expression, prior to filtering there were 39376 genes and after filtering 19118 remained. As such, 20 258 outliers were removed.
 
 No samples noted a library size large enough to be removed from the analysis.
 
-# 6. How did you handle replicates?
+## 6. How did you handle replicates?
 Replicates were maintained as individual samples throughout the analysis. I retained all 40 samples (20 CD and 20 Control) in the count matrix so that the within-group biological variability is preserved for downstream differential expression analysis.
 
-# 7. What is the final coverage of your dataset?
+## 7. What is the final coverage of your dataset?
 The output of the code below noted 40 samples and 16408 genes. Hence, the coverage is 16408 genes.
 
 dim(norm_cpm_annot_mapped_clean) # Output: [1] 16408    40
 
+```{r}
+final_normalized_counts <- norm_cpm_annot_mapped_clean
+
+# Save the final normalized counts with a slightly different name
+save(final_normalized_counts, file = "A1_normalized_counts.RData")
+
+# Save the sample annotation data with a different name
+save(sample_metadata, file = "A1_truncated_sample_annotations.RData")
+
+```
 
 
