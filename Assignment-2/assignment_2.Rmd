@@ -491,8 +491,7 @@ kable(formatted_all, format = "html", caption = "Table 4: Over-representation an
   kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
   scroll_box(height = "400px")
 ```
-There is a decent amount of overlap between the term names here
-
+There is a decent amount of overlap between the term names here. In the following sub sections, I will examine the overlap between this table and the other 2 ORA tables.
 
 ### Overlap of Table 4 with Table 3 (Downregulated)
 
@@ -532,6 +531,9 @@ The most relevant enriched pathways from the paper are noted below with an expla
 Lipid Metabolism / Mitochondrial Structure: Pathways such as Bile secretion, Fat digestion and absorption, Arachidonic acid metabolism indicate suppressed lipid handling, resonating with “Lipid Metabolism” and “Respiration ATP” (i.e., mitochondrial dysfunction) in the source paper.
 
 Respiration / ATP Production: The downregulation of pathways crucial for nutrient absorption and energy homeostasis (e.g., vitamin digestion, peroxisome activity) suggests broad deficits in cellular respiration, paralleling “Respiration ATP” from the figure [@kilby_2019].
+
+# Conclusion
+The results demonstrate a significant upregulation of inflammatory bowel disease pathways, particularly those associated with Crohn's disease. Many pathways directly related to Crohn’s disease were identified among both upregulated and downregulated genes, reinforcing the robustness of the dataset in capturing disease-associated transcriptional changes. This suggests that the clinical RNA-seq data effectively reflects the molecular impact of Crohn’s disease. Given that all samples were derived from individuals with and without the disease under well-controlled conditions, and the study employed rigorous RNA extraction and sequencing protocols [@braun_2024], these findings are unlikely to be artifacts of poor sample handling. The high-quality sample preparation and sequencing methods further support the reliability of these observed transcriptional differences.
 
 
 # References
