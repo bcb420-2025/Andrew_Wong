@@ -5,13 +5,15 @@ date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     fig_caption: true
 bibliography: assignment-2.bib
 csl: "biomed-central.csl"
 ---
 
-```{r, message=FALSE, warning=FALSE, error=FALSE, results='hide'}
+```{r, message=FALSE, warning=FALSE, error=FALSE, results="hide"}
+# References for each of these packages in References
+
 if (!requireNamespace("ggrepel", quietly = TRUE)) {
   install.packages("ggrepel")
 }
@@ -38,9 +40,9 @@ A1_normalized_counts.RData: contains a data frame named final_normalized_counts 
 
 A1_truncated_sample_annotations.RData: contains a data frame named sample_metadata (40 rows x 4 columns), storing attributes such as diagnosis (CD or Control), patient_group (Rural, Urban, or CD), sex (male/female), and age.
 
-Below is a code snippet demonstrating how I load these final data objects and display a quick summary. This code will serve as the foundation for further steps in Assignment 2.
+Below is a code snippet demonstrating how I load these final data objects from A1. This code will serve as the foundation for further steps in Assignment 2.
 
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # (40 x 4 data frame named sample_metadata in A1)
 load("A1_truncated_sample_annotations.RData")
 
@@ -49,10 +51,18 @@ load("A1_normalized_counts.RData")
 
 cat("Dimensions of sample_metadata:", dim(sample_metadata), "\n")
 head(sample_metadata)
+```
+The sample metadata appears to be the same as A1, lets look at the normalized count data.
 
+
+```{r, warning=FALSE, error=FALSE}
 cat("\nDimensions of final_normalized_counts:", dim(final_normalized_counts), "\n")
 head(final_normalized_counts[, 1:5])  
 
+```
+The normalized count data looks good
+
+```{r, warning=FALSE, error=FALSE}
 kable(sample_metadata, caption = "Table 1: Truncated sample annotations for GSE233900")
 
 ```
@@ -60,11 +70,8 @@ As seen above, there are 40 samples (rows) in sample_metadata, each annotated wi
 
 Note: GSM7438854 to GSM7438873 are control samples while GSM7438874 to GSM7438893 are CD samples.
 
-The code below modified from lecture [@isserlin_2025a].
-```{r}
-# --------------------------
-# Pre-Multiple Hypothesis Testing Step
-# --------------------------
+Before differential expression analysis, lets examine how the samples cluster in the MDS plot from A1. The code below is modified from lecture [@isserlin_2025a].
+```{r, warning=FALSE, error=FALSE, fig.cap="*Figure 1: Multi-Dimensional Scaling (MDS) plot of TMM-normalized RNA-seq counts. This plot visualizes the clustering of Crohn’s disease (CD) samples versus non-CD controls based on their gene expression profiles. Each point represents a sample, colored by diagnosis: orange for CD samples and purple for non-CD controls. Clear separation between the two groups suggests distinct gene expression patterns associated with Crohn’s disease.*"}
 
 # Visualizing how CD samples cluster relative to non-CD controls
 # in the TMM-normalized data
@@ -86,20 +93,22 @@ legend("topright",
 ```
 The MDS plot shows a clear separation between the Crohn’s disease (CD) and control samples, with CD samples clustering predominantly on the right and control samples on the left. This separation suggests that the gene expression profiles of these two groups are distinct, with the first principal component (Leading logFC dim 1) explaining 71% of the variance. The second dimension (Leading logFC dim 2) captures an additional 10% of the variance, indicating that most of the variation in the dataset is due to differences between CD and non-CD samples.
 
-While there is some overlap between the two groups, the clustering pattern indicates that disease status has a strong influence on transcriptomic variation. 
+While there is some overlap between the two groups, the clustering pattern indicates that disease status has some influence on transcriptomic variation.
 
-```{r}
+# Differential Gene Expression Analysis
+
+```{r, warning=FALSE, error=FALSE}
 # Making sure Control is the baseline level
 sample_metadata$diagnosis <- factor(sample_metadata$diagnosis, 
                                     levels = c("Control", "CD"))
 design_matrix <- model.matrix(~ sample_metadata$diagnosis)
 design_matrix
 ```
-The control samples take on the factor level 0 (as shown in column sample_metadata$diagnosisControl), while the CD samples take on the reference level (1). Thus, the fold changes produced in the differential expression analysis will represent the change from control expression levels to CD expression levels. 
+The control samples take on the factor level 0 (as shown in column sample_metadata$diagnosisControl), while the CD samples take on the reference level (1). Thus, the fold changes produced in the differential expression (DE) analysis will represent the change from control expression levels to CD expression levels. 
 
 As noted in class, the best differential expression test for our use case is likely `glmQLFit` as it provides more accurate type I error rate control and robustness to outliers for RNA-seq data than alternatives [@isserlin_2025a].
 
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # FITTING A QUASI-LIKELIHOOD NEGATIVE BINOMIAL GLM WITH EDGER
 # Construct a DGEList using the TMM-normalized counts and diagnosis groups
 dge_object <- DGEList(counts = as.matrix(final_normalized_counts),
@@ -126,14 +135,14 @@ head(my_DE_results)
 ```
 Here, a positive log-fold change (logFC) indicates upregulation in CD samples relative to controls, whereas a negative logFC suggests downregulation in CD samples.
 
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # Count how many genes have raw p-value < 0.05
 sum(my_DE_results$PValue < 0.05)
 ```
 Out of the 16,408 genes analyzed, 8,151 (~49.7%) exhibit nominal significance (p-value < 0.05), suggesting  transcriptomic differences between Crohn’s disease (CD) and control samples. While the samples did cluster somewhat well in the MDS plot, this number is unusually high. If most genes remain significant after correction, the result it suggests systemic dysregulation; however, if many genes lose significance after correction, this could indicate the need to consider confounding factors.
 
 To apply a more stringent threshold, a threshold of 0.5 log fold change can be considered for more sensitive changes to analyze while a threshold of 1 can be used for higher confidence results [@love_2014]. Considering the high proportion of genes left, lets examine the threshold at 1.
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # log fold change > 1
 sum(abs(my_DE_results$logFC) > 1)
 sum(abs(my_DE_results$logFC) > 1 & (my_DE_results$PValue < 0.05))
@@ -147,11 +156,11 @@ sum(abs(my_DE_results$logFC) > 0.5 & (my_DE_results$PValue < 0.05))
 With the more stringent threshold of |logFC| > 1, only 766 genes (~4.7% of 16,408) show a substantial expression change between Crohn’s disease (CD) and control samples. Among these, 764 genes (~4.7%) also pass the statistical significance threshold (p-value < 0.05). 766 genes meet the absolute log fold change threshold (|logFC| > 1) while 764 genes meet both the logFC and statistical significance (p-value < 0.05) thresholds. Testing at the threshold of |logFC| > 0.5, a similar proportion pass both thresholds 2961/3065 genes (~0.97). This high proportion of genes meeting the log fold change and p-value thresholds suggests that most genes with large expression differences are also statistically significant [@love_2014].
 
 
-# Multiple Hypothesis Testing
+## Multiple Hypothesis Testing
 From the original result, we have 8151 differentially expressed genes. However, given a p-value of 0.05, we expect a false-positive result of 5% by chance. To correct for false positives, 
 
 We will be using the Benjamini-Hochberg correction to correct for false positives as it effectively controls the false discovery rate (FDR) when testing a large number of genes [@isserlin_2025a]. The cut off we will be using is 0.05 as noted in Benjamini and Hochberg's original article [@benjamini_1995]. While a cut off of 0.1 is tolerable, 0.05 continues to be standard practice and can provide higher confidence genes [@chen_2021].
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # For safety, make a copy of DE_results
 DE_table <- my_DE_results 
 
@@ -161,11 +170,10 @@ cat("Number of DE genes with FDR < 0.05:", nrow(DE_significant), "\n")
 ```
 6886 pass the threshold from the 8151 genes. Given the relatively decent separation of genes Crohn's and Control samples in the MDS plot, this is not completely unreasonable.
 
-Now 
+To examine this distribution with reference to genes instead of samples, we can produce a volcano plot.
+```{r, warning=FALSE, error=FALSE, fig.cap="*Figure 2: Volcano plot displaying the statistical significance (FDR) and log fold change (logFC) of differentially expressed genes. Each point represents a gene, with the x-axis indicating log2 fold change and the y-axis showing the -log10 transformed FDR. The top 10 most statistically significant genes (lowest FDR) are highlighted in red and labeled. Vertical purple lines represent a fold change threshold of ±1 (log2 scale), and the horizontal purple line indicates an FDR threshold of 0.05. This visualization helps identify key differentially expressed genes with high statistical significance and large expression changes.*"}
 
-```{r}
-#  Volcano Plot for a Preliminary Look
-# We highlight the top 10 genes (lowest FDR) in a different colour 
+# We highlight the top 10 genes (lowest FDR) 
 # and label them with their rownames (gene symbols).
 
 # Make a copy of the DE table for plotting
@@ -217,7 +225,7 @@ volcano_plot
 ```
 From the purple lines indicating the FDR and log fold change thresholds, many genes pass both thresholds. This is not unexpected given how many passed the earlier p-value and log fold change thresholds from earlier. Since the top 10 lowest FDR genes have a positive log fold change, it seems that the most statistically significant genes are upregulated. This is confirmed by the output of the code below. 
 
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # Top 10 upregulated (highest positive logFC, lowest FDR)
 top10_upregulated <- volcano_data[order(-volcano_data$logFC, volcano_data$FDR), ][1:10, ]
 
@@ -245,16 +253,16 @@ Their main differential expression (DE) readout is fundamentally different from 
 Despite this, there is overalp between the gene sets output by the paper and the top 10 genes noted by the volcano plot analysis above. CXCL8 is noted as one of the immune system related extracellular matrix genes which are upregulated in Crohn's disease [@braun_2024]. Considering the lack of overlap between the methodologies, and that we are comparing only a sample of genes from each analysis, this is fairly promising. There is no overlap between the top 10 most downregulated genes in Crohn's with the top 10 most significantly downregulated genes in the volcano plot above.
 
 ## Heat Map
-To see how the conditions cluster more formally, lets make a heat map from the final normalized counts. Repurposing the code from class, we [@isserlin_2025a].
+To see how the conditions cluster more formally, lets make a heat map from the final normalized counts. Repurposing the code from class, we can produce the following heat map[@isserlin_2025a].
 
-```{r}
+```{r, warning=FALSE, error=FALSE, fig.cap="*Figure 3: Heatmap of differentially expressed (DE) genes in Crohn’s disease (CD) vs. control samples. Expression values are TMM-normalized and scaled by row. Each row represents a gene, and each column represents a sample. Colors indicate relative expression levels, with purple representing downregulation, white indicating no change, and orange representing upregulation. Samples are hierarchically clustered based on expression similarity. The top annotation bar indicates sample diagnosis: light blue for controls and pink for CD samples.*"}
 
-# Make a copy of the normalized data (e.g., final_normalized_counts)
+# Make a copy of the normalized data
 my_heatmap_matrix <- final_normalized_counts
 
 sig_gene_names <- rownames(DE_significant)
 
-# Create the heat map matrix by finding the DE genes, transposing to scale the row by subtracting by mean and dividing by SD then transpose back
+# Create the heat map matrix by finding the DE genes, transposing to scale the row by subtracting by mean and dividing by SD then transposing back
 my_heatmap_matrix_sigonly <- t(
   scale(
     t(my_heatmap_matrix[rownames(my_heatmap_matrix) %in% sig_gene_names, ])
@@ -297,18 +305,22 @@ my_heatmap
 The heatmap visually groups the control samples together and the test samples together, forming distinct purple and orange quadrants, meaning their expression levels are more similar within the same condition than across conditions. Within each condition, genes exhibit consistent up or downregulation across replicates. For example, genes upregulated in the test condition, such as GeneX and GeneY, show similarly increased expression across all test replicates but remain unchanged or downregulated in the control group.
  
  
-# Over Representation Analysis
-Over-representation analysis (ORA) is a statistical method used to determine whether a predefined set of genes (e.g., from a biological pathway) is significantly enriched among differentially expressed genes, helping identify relevant biological processes or functions associated with the dataset [@isserlin_2025a]. We will be doing ORA on our differentially expressed genes to find up and down regulated gene sets. 
+# Over Representation Analysis (ORA)
+Over-representation analysis is a statistical method used to determine whether a predefined set of genes (e.g., from a biological pathway) is significantly enriched among differentially expressed genes, helping identify relevant biological processes or functions associated with the dataset [@isserlin_2025a]. We will be doing ORA on our differentially expressed genes to find up and down regulated gene sets. 
 
-## Methods
+## ORA Methods
 
 I have chosen to use `gprofiler2` for ORA because they contain gene sets with the latest annotations and is the recommendation in lecture 8 [@isserlin_2025a]. This is especially important for gene sets because older sets might not contain pathway information of newer sets or may even contain outdated, falsified information [@zerbino_2020].
 
-## gprofiler Analysis
+Since the focus of this analysis is on Crohn's disease and irritable bowel syndrome (IBS), the best annotation sources would be those that provide disease-related pathways, immune response mechanisms, and gut-related biological processes. I chose not to query all the available sources, since that resulted in a cluttered output. 
+
+Instead, I decided on the gene set from Kyoto Encyclopedia of Genes and Genomes (KEGG). This is the dataset I did my homework analysis on a few weeks ago. The homework lead to my discovery that KEGG has a pathway specifically for inflammatory bowel disease, an affliction people with Crohn's disease are often diagnosed with [@braun_2024; @kanehisa_2025]. In their notes, they reference Crohn's disease as one of the afflictions which files under this umbrella term along with irritable bowel syndrome [@kanehisa_2025]. Additionally, the provide a curated disease-related pathways, immune response mechanisms, and phenotype associations relevant to Crohn's disease and irritable bowel syndrome [@kanehisa_2025].The KEGG PATHWAYS gene sets accessed through `gprofiler2` contains the 2024-01-22 version of the KEGG gene set.
+
+
+## Gene Set Queries
 
 To use either the web based version of gprofiler or the R package, we first define sets for all the upregulated, downregulated, and all differentially expressed genes based on FDR. Following the procedure from earlier, upregulation is noted by a log fold change greater than 0 while downregulation is change less than 0 [@isserlin_2025a]. The code below is a modified version from class [@isserlin_2025a].
-
-```{r}
+```{r, warning=FALSE, error=FALSE}
 # Genes with a log fold change above 0 (Upregulated in Crohn's disease)
 ora_up_genes <- rownames(my_DE_results)[
   my_DE_results$FDR < 0.05 & my_DE_results$logFC > 0
@@ -326,7 +338,7 @@ ora_all_genes <- rownames(my_DE_results)[
 
 # Write upregulated genes to a text file
 write.table(
-  x = upregulated_genes, 
+  x = ora_up_genes, 
   file = file.path(getwd(), "CD_upregulated_genes.txt"),
   col.names = FALSE, 
   quote = FALSE,
@@ -335,7 +347,7 @@ write.table(
 
 # Write downregulated genes to a text file
 write.table(
-  x = downregulated_genes, 
+  x = ora_down_genes, 
   file = file.path(getwd(), "CD_downregulated_genes.txt"),
   col.names = FALSE, 
   quote = FALSE,
@@ -344,7 +356,7 @@ write.table(
 
 # Write all significant DE genes to a text file
 write.table(
-  x = significant_genes, 
+  x = ora_all_genes, 
   file = file.path(getwd(), "CD_significant_genes.txt"),
   col.names = FALSE, 
   quote = FALSE
@@ -352,13 +364,15 @@ write.table(
 )
 
 # Print summary
-cat("Number of upregulated genes:", length(upregulated_genes), "\n")
-cat("Number of downregulated genes:", length(downregulated_genes), "\n")
-cat("Total number of significant DE genes:", length(significant_genes), "\n")
+cat("Number of upregulated genes:", length(ora_up_genes), "\n")
+cat("Number of downregulated genes:", length(ora_down_genes), "\n")
+cat("Total number of significant DE genes:", length(ora_all_genes), "\n")
 ```
 
-I saved the genes in a txt file to compare the results of the web based version of g:Profiler to that output by code below. 
-```{r}
+I saved the genes in a txt file to compare the results of the web based version of g:Profiler to that output by code below. More on this in the journal.
+
+Now, lets query gprofiler to The code below is a modified version from class [@isserlin_2025a].
+```{r, warning=FALSE, error=FALSE}
 
 # Upregulated Genes
 gprofiler_up <- gost(
@@ -366,7 +380,7 @@ gprofiler_up <- gost(
   organism           = "hsapiens",
   user_threshold     = 0.05,
   correction_method  = "fdr",
-  sources            = c("KEGG"),
+  sources            = c("KEGG"), # , "REAC", "HP", "WP"
   significant        = TRUE
 )
 
@@ -376,7 +390,7 @@ gprofiler_down <- gost(
   organism           = "hsapiens",
   user_threshold     = 0.05,
   correction_method  = "fdr",
-  sources            = c("KEGG"),
+  sources            = c("KEGG"), # , "REAC", "HP", "WP",
   significant        = TRUE
 )
 
@@ -386,22 +400,22 @@ gprofiler_all <- gost(
   organism           = "hsapiens",
   user_threshold     = 0.05,
   correction_method  = "fdr",
-  sources            = c("KEGG"),
+  sources          = c("KEGG"), # , "REAC", "HP", "WP"
   significant        = TRUE
 )
 
 # Printing Summaries
 cat("Number of KEGG terms enriched (Up):", 
-    if(is.null(ora_res_up)) 0 else nrow(ora_res_up$result), "\n")
+    if(is.null(gprofiler_up)) 0 else nrow(gprofiler_up$result), "\n")
 cat("Number of KEGG terms enriched (Down):", 
-    if(is.null(ora_res_down)) 0 else nrow(ora_res_down$result), "\n")
-cat("Number of KEGG terms enriched (All Sig):", 
-    if(is.null(ora_res_all)) 0 else nrow(ora_res_all$result), "\n")
+    if(is.null(gprofiler_down)) 0 else nrow(gprofiler_down$result), "\n")
+cat("Number of KEGG terms enriched (All DE Genes):", 
+    if(is.null(gprofiler_all)) 0 else nrow(gprofiler_all$result), "\n")
 ```
-The number of upregulated KEGG terms returned is greater than the number of terms from the down regulated and 
+The number of upregulated KEGG terms returned is greater than the number of terms from the down regulated and all differentially expressed genes combined. Some pathways may be strongly enriched in only upregulated genes but not in downregulated genes, or vice versa. When both sets are combined, pathways that were significant in separate lists might lose statistical significance because the signal is diluted [@wieder_2021].
 
-
-```{r}
+Before analyzing the ORA results, lets define a function to clean and format the `gprofiler2` results into a table.
+```{r, warning=FALSE, error=FALSE}
 # Function to clean and format g:Profiler results for a table
 format_gprofiler_results <- function(gprofiler_results) {
   if (is.null(gprofiler_results$result)) {
@@ -414,33 +428,112 @@ format_gprofiler_results <- function(gprofiler_results) {
   
   return(df)
 }
+```
 
+Note that the following ORA result tables are clipped to only include up to the last relevant entry to reduce clutter.
+
+
+## Upregulated ORA Results
+```{r, warning=FALSE, error=FALSE}
 # Format upregulated results
-formatted_up <- format_gprofiler_results(gprofiler_up)
-kable(formatted_up, format = "html", caption = "Table 4: Over-representation analysis results for **upregulated** genes in CD samples.") %>%
-  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
-  scroll_box(height = "400px")
-
-# Format downregulated results
-formatted_down <- format_gprofiler_results(gprofiler_down)
-kable(formatted_down, format = "html", caption = "Table 5: Over-representation analysis results for **downregulated** genes in CD samples.") %>%
-  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
-  scroll_box(height = "400px")
-
-# Format all significant results
-formatted_all <- format_gprofiler_results(gprofiler_all)
-kable(formatted_all, format = "html", caption = "Table 6: Over-representation analysis results for **all significant** genes in CD samples.") %>%
+formatted_up <- format_gprofiler_results(gprofiler_up) %>% head(68)
+kable(formatted_up, format = "html", caption = "Table 2: Over-representation analysis results for **upregulated** genes in CD samples.") %>%
   kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
   scroll_box(height = "400px")
 ```
 
+Within these upregulated genes (i.e., genes having FDR < 0.05 and logFC > 0), multiple enriched pathways involve immune activation and inflammatory signaling, which is consistent with known pathophysiological mechanisms in Crohn’s disease (CD). Several pathways stand out, many of which are fairly highly ranked among the 77 pathways ordered by p-value. Note that the order for the adjusted p-value on the g:Profiler website mirrors that of the output here.
+
+Inflammatory Bowel Disease (p=0.0024438) | Rank 45: This pathway specifically mentions Crohn’s disease and ulcerative colitis [@kanehisa_2025]. Its enrichment in upregulated genes aligns well with the chronic inflammatory nature of CD.
+
+Epithelial Cell Signaling in Helicobacter pylori Infection (p=0.0169968) | Rank 61: Although H. pylori is more commonly associated with gastric ulcers, the presence of this term further underlines the heightened inflammatory/immune processes in the gut epithelium. The overlap between the symptoms infection and Crohn's is very high [@yu_2018]. I can also testify since doctors tested me for Helicobacter pylori Infection as well as Crohn's after my IBD diagnosis.
+        
+Phagosome (p=0.0000000) | Rank 5: Similar to rank 61, Phagosome enrichment likewise indicates increased antigen processing and macrophage or dendritic cell activity which is often linked to both Crohn's and IBD [@federici_2023]. 
+
+TNF Signaling Pathway (p=0.0000236) | Rank 16: TNF-α is a key cytokine strongly implicated in CD, and anti-TNF therapies (e.g., infliximab) are a mainstay of CD treatment [@pagnini_2021].
+IL-17 Signaling Pathway (p=0.0001953): 
+        IL-17 is produced by Th17 cells, which also play a significant role in mucosal inflammation and epithelial barrier regulation in the gut.
+
+Toll-Like Receptor (TLR) Signaling Pathway (p=0.0003584) | Rank 26: TLRs detect microbial products and trigger innate immune responses—an important feature in CD, where gut microbiota can influence disease progression through excessive immune activation [@yu_2018].
+
+Intestinal Immune Network for IgA Production (p=0.0195572)| Rank 68: Involvement of gut-associated lymphoid tissue (GALT) is crucial for mucosal immunity. Secretory IgA helps neutralize pathogens in the intestinal lumen. Upregulation here suggests heightened immune surveillance or compensatory responses to microbial dysbiosis, a hallmark in CD [@benmkaddem_2019].
+
+Rheumatoid Arthritis (p=0.0000000) | Rank 6: While not directly a GI disease, RA is autoimmune in nature, and its enrichment highlights shared inflammatory circuits (e.g., TNF, IL-17) typical of autoimmune disorders [@jahid_2023].
 
 
-<!-- ![Upregulated](image.png) -->
+## Downregulated ORA Results
+
+```{r, warning=FALSE, error=FALSE}
+# Format downregulated results
+formatted_down <- format_gprofiler_results(gprofiler_down)
+kable(formatted_down, format = "html", caption = "Table 3: Over-representation analysis results for **downregulated** genes in CD samples.") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
+  scroll_box(height = "400px")
+```
+When examining the downregulated genes (logFC < 0, FDR < 0.05), we see a strong emphasis on metabolic and digestive pathways, which may hint at diminished absorptive or nutrient-processing capacity in Crohn’s disease [@manski_2024; @kilby_2019]. Several key pathways stand out as potentially relevant to gut health and inflammatory processes. The ones among the top 10 are highlighted here. 
+
+Each of the following pathways are referenced in literature related to Crohn's disease outcomes [@kilby_2019].
+Drug Metabolism - Cytochrome P450 (p=0.0000084) - Rank: 2
+Vitamin Digestion & Absorption (p=0.0001011) - Rank: 8
+Bile Secretion (p=0.0002299) - Rank: 9
+Fat Digestion & Absorption (p=0.0002299) - Rank: 10
+
+Additionally,with regards to the pathway Tight Junction (p=0.0125733), Tight junction proteins regulate intestinal barrier integrity. Downregulation here may exacerbate intestinal permeability (“leaky gut”), and "patients with clinically active CD have increased intestinal permeability" [@landy_2016].
+
+There are other potentially relevant pathways as well; however, this is more than enough to be considered promising for now. More to be examined later.
+
+## All Genes ORA Results
+
+```{r, warning=FALSE, error=FALSE}
+# Format all significant results
+formatted_all <- format_gprofiler_results(gprofiler_all) %>% head(20)
+kable(formatted_all, format = "html", caption = "Table 4: Over-representation analysis results for **all significant** genes in CD samples.") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
+  scroll_box(height = "400px")
+```
+There is a decent amount of overlap between the term names here
+
+
+### Overlap of Table 4 with Table 3 (Downregulated)
+
+Multiple pathways that appear in Table 3—such as Metabolic pathways (KEGG:01100) and routes for nutrient absorption (e.g., Vitamin digestion, Bile secretion)—also show up in Table 4. This overlap is expected since the downregulated gene list is a subset of all significant genes. For instance, Metabolic pathways is highly represented in both lists, reflecting how many decreased-expression genes are tied to key metabolic functions. Their presence in the larger set (Table 4) indicates these same metabolic disruptions remain significant when considering all differentially expressed genes—reinforcing the idea that suppressed nutrient absorption or bile metabolism might be a consistent feature in Crohn’s disease.
+
+### Overlap of Table 4 with Table 2 (Upregulated)
+
+Likewise, many of the immune and inflammatory pathways from Table 2, such as TNF signaling, Phagosome, and Protein processing in the endoplasmic reticulum, re-emerge in Table 4. These pathways are major contributors to pro-inflammatory states in the gut and, when viewed in combination with downregulated metabolic processes, provide a more holistic picture of Crohn’s disease pathology—heightened immune activity alongside disturbed nutrient handling. Because Table 4 includes both up- and downregulated genes, it incorporates these immune-driven disruptions from Table 2 plus the metabolic deficits from Table 3.
+
+### Overlap Across All Three Tables
+
+Some terms, like Metabolic pathways (01100), appear in all three tables, indicating that several metabolic genes are increased and others are decreased, collectively driving overall significance. In other words, the all significant group captures both extremes: genes whose expression rises in Crohn’s (e.g., immune-related triggers) and those whose expression falls (e.g., nutrient-absorption proteins). When a pathway is enriched in both upregulated and downregulated lists, it often suggests a process where certain components are activated while others are suppressed.
+
+## Comparing ORA Results to Data Source Paper
+The original source paper aimed to investigate environmental exposures, dietary patterns, ileal transcriptomic profiles, metabolomic data, and the microbiome in newly diagnosed Crohn’s disease patients and healthy controls from both rural and urban regions of China and Israel [@braun_2024].
+
+As noted in the section `Differentially Expressed Genes in The Source study`, their methodology was seemingly incommeasureable with regards to differential expression analysis; however, their ORA outcomes map fairly directly to many of the enriched pathways in both Table 2 and Table 3. More details on how they achieved their ORA results in the `Differentially Expressed Genes in The Source study`.
+
+### Upregulated Genes (Table 2) vs. “Up in Crohn” Modules
+
+Many of the pathways enriched in Table 2 (e.g., TNF signaling, Toll-like receptor signaling, IL-17 signaling, and Phagosome) map well onto the “Up in Crohn” category in the paper where the authors noted the enriched pathways they found in Crohn's disease [@braun_2024]. 
+
+The most relevant enriched pathways from the paper are noted below with an explanation of how they relate to pathways found in Table 2.
+
+Immune ECM / Myeloid module: The strong representation of pro-inflammatory pathways (TNF, TLR, IL-17) suggests heightened myeloid cell involvement and immune extracellular matrix remodeling—consistent with active inflammation [@braun_2024; @jahid_2023].
+    
+Epithelial defense: Enhanced epithelial-associated pathways (e.g., Cell cycle, Phagosome) reflect an upregulated protective response at the mucosal surface, aligning with the figure’s emphasis on epithelial defense [@braun_2024; @federici_2023; @yu_2018].
+  
+T/B Cells: Several immune-centric pathways in Table 2 relate to lymphocyte activation (e.g., antigen processing/presentation) [@federici_2023].
+
+### Downregulated Genes (Table 3) vs. “Down in Crohn” Modules 
+
+The “Down in Crohn” pathways of energy metabolism, lipid digestion, and mitochondrial structure in the source paper align well with the reduced metabolic capacity reflected in Table 3.
+
+The most relevant enriched pathways from the paper are noted below with an explanation of how they relate to pathways found in Table 3.
+
+Lipid Metabolism / Mitochondrial Structure: Pathways such as Bile secretion, Fat digestion and absorption, Arachidonic acid metabolism indicate suppressed lipid handling, resonating with “Lipid Metabolism” and “Respiration ATP” (i.e., mitochondrial dysfunction) in the source paper.
+
+Respiration / ATP Production: The downregulation of pathways crucial for nutrient absorption and energy homeostasis (e.g., vitamin digestion, peroxisome activity) suggests broad deficits in cellular respiration, paralleling “Respiration ATP” from the figure [@kilby_2019].
 
 
 # References
-Additional credits to GitHub Copilot for code completions and comment assistance.
-
-
+Credits to GitHub Copilot for code completions and comment assistance.
 
