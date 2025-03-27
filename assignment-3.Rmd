@@ -1,0 +1,77 @@
+---
+title: "Assignment 3"
+author: "Andrew Wong"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '3'
+  html_document:
+    toc: true
+    toc_depth: 3
+    fig_caption: true
+bibliography: "assignment-3.bib"
+csl: "biomed-central.csl"
+---
+
+
+# Introduction
+
+## Summary of Dataset and Experimental Design  
+## Assignment 1
+```{r child="../Assignment-1/assignment-1.Rmd"}
+```
+
+## Assignment 2
+```{r child="../Assignment-2/assignment-2.Rmd"}
+```
+
+## Basic Statistics and Data Source (e.g., GEO ID)
+
+# Non-thresholded Gene Set Enrichment Analysis
+
+## Methods and Gene Sets Used  
+## Summary of Enrichment Results  
+## Comparison to Thresholded Analysis (Assignment 2)  
+
+# Visualization of Enrichment Results in Cytoscape
+
+## Enrichment Map Creation  
+### Node and Edge Counts  
+### Thresholds Used  
+### Screenshot of Initial Network  
+
+## Network Annotation  
+### Parameters Used for Annotation  
+
+## Publication-ready Figure  
+### Figure and Legend  
+
+## Theme Network (Collapsed View)  
+### Major Themes  
+### Fit with the Model  
+### Novel Pathways or Themes  
+
+# Interpretation and Detailed View of Results
+
+## Comparison to Original Paper  
+## Comparison to Thresholded Results (Assignment 2)  
+## Literature Support for Observed Pathways  
+
+# Post-Analysis Exploration
+
+## Option 1: Transcription Factors / microRNAs / Drugs  
+### Rationale and Supporting Publications  
+### Results of Post-analysis  
+
+## Option 2: Detailed Exploration of a Specific Pathway or Theme  
+### Justification for Choice  
+### Network or Pathway Diagram  
+### Annotation with Fold Change and p-values  
+
+## Option 3: Dark Matter Genes  
+### Heatmap: Genes Not Annotated in Returned Pathways  
+### Heatmap: Genes Not Annotated in Entire Pathway Set  
+
+# References
+
