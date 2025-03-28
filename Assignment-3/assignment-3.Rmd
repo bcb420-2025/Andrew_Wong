@@ -17,14 +17,116 @@ csl: "biomed-central.csl"
 
 # Introduction
 
-## Summary of Dataset and Experimental Design  
-## Assignment 1
-```{r child="../Assignment-1/assignment-1.Rmd"}
-```
+This report outlines the results from my assignment 1, assignment 2, and assignment 3 for the 2025 offering of BCB420. Assignment 1 outlines the dataset and initial preprocessing. Assignment 2 notes how transcriptomic signatures from Chron's disease patients differ from controls in the chosen dataset and provides ranked data to be used in assignment 3. Assignment 3 builds on the analysis from assignment 2 to further examine the transcriptomic features of the dataset.
 
-## Assignment 2
-```{r child="../Assignment-2/assignment-2.Rmd"}
-```
+## Assignment 1 Summary: Data Set Selection and Initial Processing. 
+
+### Data Acquisition, Quality Assessment, and Normalization
+
+To evaluate differential gene expression in Crohn’s disease (CD), we analyzed RNA-seq data obtained from the Gene Expression Omnibus (GEO) database under accession number GSE233900. This dataset, titled "The Study Of Urban and Rural Crohn disease Evolution (SOURCE)", contains expression profiles from 40 samples representing newly diagnosed Crohn’s disease and healthy control patients from urban and rural regions of China and Israel. Specifically, our analysis includes 20 CD samples and 20 control samples, selected to maximize statistical power and biological heterogeneity.
+
+The primary goal of this phase of the analysis was to normalize the raw count data, ensure its suitability for downstream differential expression testing, and map gene identifiers to standardized gene symbols (HGNC symbols) for interpretation. Using the GEOquery [@davis_2007], edgeR [@yunshunchen_2017], and biomaRt [@smedley_2009] packages in R, we conducted quality control, filtering, normalization, and identifier mapping.
+
+### Data Download and Metadata Parsing
+
+We downloaded the metadata associated with each GSM object using GEOquery, parsing relevant fields such as diagnosis status, patient group, age, and sex. Patient diagnostic labels were extracted and cleaned, revealing an even distribution of CD and control samples. Since the supplemental file on GEO only included TPM-normalized data, raw counts were directly downloaded from the NCBI FTP link for proper normalization procedures. Gene identifiers in the raw counts matched sample GSM IDs, allowing seamless integration with the metadata.
+
+### Initial Quality Assessment and Filtering
+
+The raw count matrix initially contained 39,376 genes across 40 samples. Quality checks included a boxplot of library sizes, density plots of log2 counts per million (CPM), and inspection for genes with low or zero expression. Of the original genes:
+
+    4,531 genes had zero counts across all samples.
+
+    18,752 genes had consistently low expression (CPM < 1 across all samples).
+
+To ensure biological signal without noise from lowly expressed genes, we filtered genes to retain those with CPM > 1 in at least 4 samples, yielding a filtered matrix of 19,118 genes. This threshold, adapted from lecture recommendations [@isserlin_2025], was chosen to preserve sufficient gene coverage for downstream analysis while removing noise.
+
+Post-filtering density plots showed clearer bimodal distributions, and boxplots of log2 CPM values indicated improved consistency across samples, supporting the conclusion that the data is of high technical quality.
+
+### Normalization Using TMM
+
+Next, we created a DGEList object in edgeR and normalized the filtered counts using the Trimmed Mean of M-values (TMM) method. This accounts for library size differences and compositional biases between samples. After normalization, we visualized the transformed data using several diagnostic plots:
+
+    Density Plot: The normalized data maintained a consistent shape across samples, showing overlapping distributions and no outliers, suggesting minimal technical artifacts.
+
+    Boxplot: Post-normalization boxplots showed reduced variability in sample medians, indicating successful scaling of library sizes.
+
+    MDS Plot: A multidimensional scaling (MDS) plot revealed separation between CD and control samples, with the first dimension explaining 27% of the variance and the second explaining 15%, suggesting strong biological differences suitable for differential analysis.
+
+    BCV Plot: The biological coefficient of variation plot confirmed the expected inverse relationship between expression level and variability. The dispersion pattern matched expectations for high-quality RNA-seq data, with a stable common dispersion trend.
+
+    Mean-Variance Plot: This final diagnostic revealed a positive correlation between average expression and variance, validating the assumptions of the negative binomial model used in downstream analysis.
+
+Together, these normalization and filtering steps ensured that the dataset was clean, high-quality, and ready for gene identifier mapping and subsequent differential expression testing. In total, 19,118 genes passed quality control and were normalized for expression analysis in Crohn’s disease versus controls.
+
+### HUGO Gene Mapping
+
+To enable gene identifier mapping from Entrez IDs to HGNC symbols, the Ensembl BioMart database (hsapiens_gene_ensembl) was queried using the biomaRt package [@isserlin_2025]. Due to known instability with the BioMart servers, the connection code was separated and occasionally had to be re-run multiple times to succeed. The mapping was performed by retrieving entrezgene_id and hgnc_symbol attributes, then merging the resulting map with normalized gene expression data (norm_cpm). Genes lacking a corresponding HGNC symbol (n = 2363) were removed to ensure compatibility with downstream analysis tools. Duplicate HGNC symbols, typically resulting from transcript variants, were consolidated by summing expression values across rows sharing the same symbol. This produced a final cleaned dataset containing 16,408 uniquely mapped HGNC genes across all samples, confirming successful mapping and duplicate resolution.
+
+## Assignment 2 Summary: Differential Expression and Enrichment Analysis 
+
+### Introduction and Context
+
+In this analysis, we build on the pre-processed RNA-seq dataset from Assignment 1, derived from GEO accession GSE233900, part of the Study Of Urban and Rural Crohn Disease Evolution (SOURCE). This study profiled ileal biopsies from 40 treatment-naïve individuals—20 Crohn’s disease (CD) patients and 20 healthy controls—spanning rural and urban cohorts in China and Israel. The RNA-seq data was processed using a raw count matrix downloaded directly from the NCBI GEO repository. 
+
+In Assignment 1, we conducted a comprehensive preprocessing pipeline: filtering out low-expression genes (fewer than 1 CPM in at least 4 samples), normalizing using edgeR’s Trimmed Mean of M-values (TMM) method, and mapping gene identifiers to HGNC symbols using biomaRt. This produced a final dataset of 16,408 unique genes across 40 samples, stored in the `final_normalized_counts` object, with metadata (diagnosis, age, sex, and patient group) stored in `sample_metadata`. Diagnostic MDS plots showed good separation between CD and control groups, with the first two dimensions explaining 71% and 10% of total variance, respectively.
+
+---
+
+### Differential Gene Expression Analysis
+
+For Assignment 2, we performed a quasi-likelihood negative binomial generalized linear model (GLM) analysis using edgeR, contrasting CD vs. control samples. With the control group set as the baseline, the model produced log fold-change (logFC) values indicating up- or downregulation in CD samples. Out of 16,408 genes, 8,151 genes (~49.7%) showed nominal significance at p < 0.05. After applying Benjamini-Hochberg correction to control the false discovery rate (FDR < 0.05), 6,886 genes remained statistically significant.
+
+To focus on biologically meaningful genes, we applied fold-change cutoffs:
+- |logFC| > 1 & FDR < 0.05 yielded 764 high-confidence DE genes (4.7% of total),
+- |logFC| > 0.5 & FDR < 0.05 yielded 2,961 genes, suggesting a strong signal with minimal inflation.
+
+A volcano plot visualized these DEGs, showing a predominance of significantly upregulated genes in CD. Genes like CXCL8, CXCR2, FCGR1A, and ALDH1A2—all previously implicated in gut inflammation or Crohn's pathology—appeared among the top upregulated DEGs.
+
+---
+
+### Heatmap Clustering and Visualization
+
+A heatmap was generated using only FDR-significant DEGs, z-score normalized per gene. Samples clustered according to diagnosis, with distinct expression patterns visible for CD versus control groups. This provided further support for disease-associated transcriptional changes being consistent across biological replicates.
+
+---
+
+### Over-Representation Analysis (ORA)
+
+To identify enriched biological pathways, we performed Over-Representation Analysis (ORA) using the gprofiler2 package, querying KEGG gene sets for:
+- Upregulated DEGs (logFC > 0, FDR < 0.05),
+- Downregulated DEGs (logFC < 0, FDR < 0.05),
+- All DEGs (FDR < 0.05).
+
+Highlights from Upregulated Gene Sets (Table 2):
+- Inflammatory Bowel Disease, TNF signaling, IL-17 signaling, and Toll-like receptor pathways were significantly enriched.
+- These reflect mucosal inflammation, myeloid activation, and epithelial defense mechanisms—core features of Crohn’s pathogenesis.
+- Pathways such as Phagosome, Rheumatoid arthritis, and Helicobacter pylori infection further support a systemic immune activation profile.
+
+Highlights from Downregulated Gene Sets (Table 3):
+- Key pathways included Vitamin digestion, Bile secretion, Fat digestion, and Drug metabolism.
+- Downregulation of Tight Junctions points to compromised intestinal barrier integrity, supporting a “leaky gut” phenotype observed in Crohn’s disease patients.
+- These findings suggest a systemic suppression of metabolic and nutrient processing pathways, potentially contributing to nutrient malabsorption and fatigue in CD.
+
+Overlap Across All DEGs (Table 4):
+- Many pathways from Tables 2 and 3 appeared again when all significant DEGs were pooled, suggesting coordinated changes involving both immune activation and metabolic suppression.
+
+---
+
+### Comparison to SOURCE Study Findings
+
+While the original study used TPM-based quantification with WGCNA to identify co-expression modules, our analysis used a gene-wise edgeR model for direct DE testing. Despite methodological differences, notable overlap was observed:
+- “Up in Crohn” modules from the SOURCE study involved TNF, IL-17, and TLR pathways—consistent with our upregulated ORA results.
+- “Down in Crohn” modules focused on lipid metabolism and mitochondrial structure, aligning with our downregulated KEGG terms (e.g., bile secretion, vitamin absorption).
+- Shared top DEGs such as CXCL8 further strengthen the consistency between the studies, despite the use of different normalization and statistical frameworks.
+
+---
+
+### Assignment 2 Conclusion
+
+Assignment 2 demonstrates that the RNA-seq dataset from GSE233900 contains robust transcriptomic signatures distinguishing Crohn’s disease from healthy controls. Differential expression analysis revealed thousands of statistically and biologically relevant genes, supported by strong clustering patterns and enrichment of immune and metabolic pathways. The overlap with the SOURCE study’s systems-level findings underscores the validity of our gene-centric approach. These results support the potential utility of specific genes and pathways as biomarkers or therapeutic targets in Crohn’s disease.
+
+
 
 ## Basic Statistics and Data Source (e.g., GEO ID)
 
