@@ -535,6 +535,50 @@ Respiration / ATP Production: The downregulation of pathways crucial for nutrien
 # Conclusion
 The results demonstrate a significant upregulation of inflammatory bowel disease pathways, particularly those associated with Crohn's disease. Many pathways directly related to Crohn’s disease were identified among both upregulated and downregulated genes, reinforcing the robustness of the dataset in capturing disease-associated transcriptional changes. This suggests that the clinical RNA-seq data effectively reflects the molecular impact of Crohn’s disease. Given that all samples were derived from individuals with and without the disease under well-controlled conditions, and the study employed rigorous RNA extraction and sequencing protocols [@braun_2024], these findings are unlikely to be artifacts of poor sample handling. The high-quality sample preparation and sequencing methods further support the reliability of these observed transcriptional differences.
 
+# Saving Information For A3
+```{r}
+head(my_DE_results)
+
+my_DE_results$Gene <- rownames(my_DE_results)
+
+write.csv(
+  my_DE_results,
+  file = "my_DE_results.csv",
+  row.names = FALSE,    # Because we moved rownames into "Gene"
+  quote = FALSE
+)
+```
+```{r}
+# Ensure the gene identifiers are stored in a column called 'Gene'
+my_DE_results$Gene <- rownames(my_DE_results)
+
+# Create a ranked gene list using the formula: rank = -log10(PValue) * sign(logFC)
+my_DE_results <- my_DE_results %>%
+  mutate(rank = -log10(PValue) * sign(logFC)) %>%
+  arrange(desc(rank))
+
+# Save the full DE results for later use in Assignment 3
+write.csv(
+  my_DE_results,
+  file = "CD_DE_results.csv",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# Create a .rnk file for GSEA (with no header, as required by GSEA's preranked mode)
+# The file will contain two columns: Gene and rank.
+write.table(
+  my_DE_results[, c("Gene", "rank")],
+  file = "CD_deg.rnk",
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE  # GSEA expects no header line
+)
+
+```
+
+
 
 # References
 Credits to GitHub Copilot for code completions and comment assistance.
