@@ -19,11 +19,14 @@ csl: "biomed-central.csl"
 
 This report outlines the results from my assignment 1, assignment 2, and assignment 3 for the 2025 offering of BCB420. Assignment 1 outlines the dataset and initial preprocessing. Assignment 2 notes how transcriptomic signatures from Chron's disease patients differ from controls in the chosen dataset and provides ranked data to be used in assignment 3. Assignment 3 builds on the analysis from assignment 2 to further examine the transcriptomic features of the dataset.
 
+NOTE: This project assumes the docker is run from the directory "Assignment-3". 
+
+## Background and Data Acquisition
+To evaluate differential gene expression in Crohn’s disease (CD), we analyzed RNA-seq data obtained from the Gene Expression Omnibus (GEO) database under accession number GSE233900. This dataset, titled "The Study Of Urban and Rural Crohn disease Evolution (SOURCE)", contains expression profiles from 40 samples representing newly diagnosed Crohn’s disease and healthy control patients from urban and rural regions of China and Israel. Specifically, our analysis includes 20 CD samples and 20 control samples, selected to maximize statistical power and biological heterogeneity.
+
 ## Assignment 1 Summary: Data Set Selection and Initial Processing. 
 
-### Data Acquisition, Quality Assessment, and Normalization
-
-To evaluate differential gene expression in Crohn’s disease (CD), we analyzed RNA-seq data obtained from the Gene Expression Omnibus (GEO) database under accession number GSE233900. This dataset, titled "The Study Of Urban and Rural Crohn disease Evolution (SOURCE)", contains expression profiles from 40 samples representing newly diagnosed Crohn’s disease and healthy control patients from urban and rural regions of China and Israel. Specifically, our analysis includes 20 CD samples and 20 control samples, selected to maximize statistical power and biological heterogeneity.
+### Data Quality Assessment and Normalization
 
 The primary goal of this phase of the analysis was to normalize the raw count data, ensure its suitability for downstream differential expression testing, and map gene identifiers to standardized gene symbols (HGNC symbols) for interpretation. Using the GEOquery [@davis_2007], edgeR [@yunshunchen_2017], and biomaRt [@smedley_2009] packages in R, we conducted quality control, filtering, normalization, and identifier mapping.
 
@@ -126,9 +129,236 @@ While the original study used TPM-based quantification with WGCNA to identify co
 
 Assignment 2 demonstrates that the RNA-seq dataset from GSE233900 contains robust transcriptomic signatures distinguishing Crohn’s disease from healthy controls. Differential expression analysis revealed thousands of statistically and biologically relevant genes, supported by strong clustering patterns and enrichment of immune and metabolic pathways. The overlap with the SOURCE study’s systems-level findings underscores the validity of our gene-centric approach. These results support the potential utility of specific genes and pathways as biomarkers or therapeutic targets in Crohn’s disease.
 
+# Package Installation
+```{r}
+library(circlize)
+library(ComplexHeatmap)
+library(dplyr)
+library(edgeR)
+library(ggplot2)
+library(gprofiler2)
+library(knitr)
+library(kableExtra)
+library(readr)
+library(stringr)
+library(DT)
+```
+
+# Non-Thresholded Gene Set Enrichment Analysis (GSEA)
+In A2, we ranked genes according to differential expression and did over representation analysis. With non-thresholded GSEA we will examine the ranked gene list without a threshold and assess all the genes in the list. Compared to ORA, GSEA is generally more consistent than ORA for identifying enriched pathways between 2 conditions because it considers all genes in an experiment and not just those above some defined cutoff [@chicco_2022]. The two conditions here will be the control group and the Crohn's Disease groups. 
+
+The steps for GSEA are as follows:
+- Make a ranked list of genes as a .rnk file to input into GSEA.
+- Perform GSEA using the provided in the docker image at "~/GSEA_4.3.2/gsea-cli.sh" [@isserlin_2025; @subramanian_2005].
+
+The chosen annotation file for GSEA is the latest gene set from the Univerisity of Toronto's Bader lab. For GSEA it is generally recommended to use no annotations from electronic annotations (IEA) and no Pathway Figure Optical Character Recognition [@chicco_2022; @isserlin_2025]. As such, the chosen data file does not have these components.
+
+Chosen annotation gene set URL: 
+- https://download.baderlab.org/EM_Genesets/March_01_2025/Human/symbol/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_March_01_2025_symbol.gmt
+
+The gene set can be found at this link: https://download.baderlab.org/EM_Genesets/March_01_2025/Human/symbol.
+
+We can download the gmt file in the following way.
+```{r message = FALSE, warning=FALSE}
+gsea_gmt   <- "~/projects/data/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_March_01_2025_symbol.gmt"
+
+if (!file.exists(gsea_gmt)) {
+    gmt_url <- "https://download.baderlab.org/EM_Genesets/March_01_2025/Human/symbol/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_March_01_2025_symbol.gmt"
+    download.file(gmt_url, destfile = gsea_gmt)
+    print("Successfully downloaded")
+}
+```
 
 
-## Basic Statistics and Data Source (e.g., GEO ID)
+
+## Making the .rnk file
+
+```{r}
+CD_DE_results <- read.csv("CD_DE_results.csv",
+                          header = TRUE,
+                          stringsAsFactors = FALSE)
+
+head(CD_DE_results)
+
+
+# Calculating the rank metric
+CD_DE_results <- CD_DE_results %>%
+  mutate(rank = -log10(PValue) * sign(logFC)) %>%
+  arrange(desc(rank))  # sort from highest to lowest rank
+
+gsea_rnk = "~/projects/data/CD_deg.rnk"
+
+# Write out the .rnk file
+# NOTE: GSEA preranked mode expects 2 columns, no header line
+write.table(
+  CD_DE_results[, c("Gene", "rank")],
+  file      = gsea_rnk,            
+  sep       = "\t",
+  row.names = FALSE,
+  col.names = FALSE,  # important! GSEA doesn’t want a header row
+  quote     = FALSE
+)
+
+head(CD_DE_results)
+```
+
+## Performing GSEA
+Following the homework assignment, GSEA is performed with the parameters below:
+- Max size: 200
+- Min size: 15
+Additionally, the default number of permutations used to calculate a p-value is 1000.
+
+```{r message = FALSE, warning=FALSE}
+# Set gsea output to CD
+gsea_dir   <- "~/projects/data/CD" 
+gsea_gmt   <- "~/projects/data/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_March_01_2025_symbol.gmt"
+gsea_exe   <- "~/GSEA_4.3.2/gsea-cli.sh"
+
+# GSEA parameters
+max_size <- 200
+min_size <- 15
+permutations <- 1000 # Default value isted for clarity
+
+analysis_name <- "CDvsCON"
+
+
+# Build the command to run GSEA in preranked mode
+gsea_cmd <- paste(
+  gsea_exe, "GSEAPreranked",
+  "-collapse false",
+  "-gmx", gsea_gmt,
+  "-nperm", permutations,
+  "-out", gsea_dir,
+  "-plot_top_x 20 -rnd_seed 12345",
+  "-rnk", gsea_rnk,
+  "-rpt_label", analysis_name,
+  "-scoring_scheme weighted",
+  "-set_max", max_size,
+  "-set_min", min_size,
+  "-zip_report false"
+)
+
+# Avoid rerunning GSEA when marking
+path_gsea_output <- file.path(gsea_dir, "CDvsCON.GseaPreranked")
+if (!file.exists(path_gsea_output)) {
+  system(gsea_cmd)  # runs the GSEA command
+}
+
+```
+The time stamp for path_gsea_output is added to the end of the analysis. I have copied the path of the analysis I did here. Lets read in the results.
+
+```{r}
+path_gsea_output <- file.path(gsea_dir, "CDvsCON.GseaPreranked.1743299144940")
+
+
+# Reading the GSEA output for upregulated / positive enrichments
+cd_up_reg <- read.table(
+  file = "~/projects/data/CD/CDvsCON.GseaPreranked.1743299144940/gsea_report_for_na_pos_1743299144940.tsv",
+  sep = "\t", header = TRUE, fill = TRUE
+)
+
+# Reading the GSEA output for downregulated / negative enrichments
+cd_neg_reg <- read.table(
+  file = "~/projects/data/CD/CDvsCON.GseaPreranked.1743299144940/gsea_report_for_na_neg_1743299144940.tsv",
+  sep = "\t", header = TRUE, fill = TRUE
+)
+```
+
+## Summarizing Enrichment Results
+
+Before summarizing the results in a table, lets see how many genes are above and below a standard FDR threshold of 0.05 [@love_2014]. While it may be overly strict in some cases, it can be used to note the number of significant pathways, we will use it as our threshold for significance when counting the total number of significant pathways [@love_2014].
+
+```{r}
+# Number of significantly upregulated pathways (FDR q-value < 0.05)
+num_up_sig <- cd_up_reg %>% filter(FDR.q.val < 0.05) %>% nrow()
+
+# Number of significantly downregulated pathways (FDR q-value < 0.05)
+num_down_sig <- cd_neg_reg %>% filter(FDR.q.val < 0.05) %>% nrow()
+
+num_up_sig2 <- cd_up_reg %>% filter(FDR.q.val < 0.001) %>% nrow()
+
+# Display results
+cat("Number of significantly upregulated pathways (FDR < 0.05):", num_up_sig, "\n")
+cat("Number of significantly downregulated pathways (FDR < 0.05):", num_down_sig, "\n")
+cat("Number of significantly upregulated pathways (FDR < 0.001):", num_up_sig2, "\n")
+
+```
+Given the large number of significantly up and downregulated pathways, lets summarize the top entries in a truncated table.
+
+Lets first summarize the upregulated set in a table. 
+
+```{r}
+# Summarize upregulated sets
+CDupreg_table <- cd_up_reg %>%
+  select(NAME, SIZE, ES, FDR.q.val) %>%
+  rename(
+    "Gene Set"         = NAME,
+    "Size"             = SIZE,
+    "Enrichment Score" = ES,
+    "FDR q-value"      = FDR.q.val
+  ) %>%
+  
+  # Removes the part of each "Gene Set" string that starts with a % and everything after it
+  mutate(`Gene Set` = str_remove(`Gene Set`, "%.*$")) %>%
+  mutate(`Gene Set` = str_to_sentence(`Gene Set`)) %>%
+  arrange(`FDR q-value`) %>%
+  dplyr::slice_head(n = 25) # Remove this to display full table
+
+# Display the table
+kable(CDupreg_table, caption = "Table 1: Top 25 Upregulated Gene Sets by FDR q-value")
+```
+
+Now lets summarize the downregulated set in a table. 
+
+```{r}
+# Summarize downregulated sets (top 25 only)
+CDnegreg_table <- cd_neg_reg %>%
+  dplyr::select(NAME, SIZE, ES, FDR.q.val) %>%
+  dplyr::rename(
+    "Gene Set"         = NAME,
+    "Size"             = SIZE,
+    "Enrichment Score" = ES,
+    "FDR q-value"      = FDR.q.val
+  ) %>%
+  
+  # Removes the part of each "Gene Set" string that starts with a % and everything after it
+  dplyr::mutate(`Gene Set` = stringr::str_remove(`Gene Set`, "%.*$")) %>%
+  dplyr::mutate(`Gene Set` = stringr::str_to_sentence(`Gene Set`)) %>%
+  dplyr::arrange(`FDR q-value`) %>%
+  dplyr::slice_head(n = 25)
+
+# Display table using kable
+kable(CDnegreg_table, caption = "Table 2: Top 25 Downregulated Gene Sets by FDR q-value")
+```
+It is interesting that Glucuronidation appears as a pathway twice.
+
+Given the large number of genes below the FDR threshold of 0.05, lets examine only the top entries arranged by enrichment score while also being below the threshold.
+
+We start by doing this for the upregulated sets.
+
+```{r}
+top_CDupreg <- CDupreg_table %>%
+  filter(`FDR q-value` < 0.05) %>%
+  arrange(desc(`Enrichment Score`))
+
+# Display the table interactively, so no need to truncate
+DT::datatable(top_CDupreg, rownames = FALSE, filter = "top",
+              options = list(pageLength = 10, scrollX = TRUE)) %>%
+  DT::formatStyle(names(top_CDupreg), fontSize = "12px")
+
+```
+
+
+## How these results compare to results from Assignment 2
+
+![Top 10 KEGG pathways from over-representation analysis of upregulated genes in Crohn's disease (CD) samples.](image.png)
+
+```{r fig.cap="Top 10 over-representation analysis (ORA) results for upregulated genes in Crohn's disease (CD) samples, based on KEGG pathway enrichment. The figure displays the pathway size, overlap with input genes (intersection size), precision, and KEGG term ID for each enriched pathway.", out.width="100%"}
+knitr::include_graphics("image.png")
+```
+
+
+
 
 # Non-thresholded Gene Set Enrichment Analysis
 
