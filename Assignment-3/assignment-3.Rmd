@@ -103,17 +103,29 @@ To identify enriched biological pathways, we performed Over-Representation Analy
 - Downregulated DEGs (logFC < 0, FDR < 0.05),
 - All DEGs (FDR < 0.05).
 
-Highlights from Upregulated Gene Sets (Table 2):
+```{r fig.cap="Table 2 from Assignment-2. The top 10 over-representation analysis (ORA) results for upregulated genes in Crohn's disease (CD) samples, based on KEGG pathway enrichment.", out.width="100%"}
+knitr::include_graphics("image-5.png")
+```
+
+Highlights from Upregulated Gene Sets (Table 2 in A2):
 
 - Inflammatory Bowel Disease, TNF signaling, IL-17 signaling, and Toll-like receptor pathways were significantly enriched.
 - These reflect mucosal inflammation, myeloid activation, and epithelial defense mechanisms—core features of Crohn’s pathogenesis.
 - Pathways such as Phagosome, Rheumatoid arthritis, and Helicobacter pylori infection further support a systemic immune activation profile.
+
+```{r fig.cap="Table 3 from Assignment-2. The top 10 over-representation analysis (ORA) results for downregulated genes in Crohn's disease (CD) samples, based on KEGG pathway enrichment.", out.width="100%"}
+knitr::include_graphics("image-6.png")
+```
 
 Highlights from Downregulated Gene Sets (Table 3):
 
 - Key pathways included Vitamin digestion, Bile secretion, Fat digestion, and Drug metabolism.
 - Downregulation of Tight Junctions points to compromised intestinal barrier integrity, supporting a “leaky gut” phenotype observed in Crohn’s disease patients.
 - These findings suggest a systemic suppression of metabolic and nutrient processing pathways, potentially contributing to nutrient malabsorption and fatigue in CD.
+
+```{r fig.cap="Table 4 from Assignment-2. The top 10 over-representation analysis (ORA) results for all differentially expressed genes (DEGs) in Crohn's disease (CD) samples, based on KEGG pathway enrichment.", out.width="100%"}
+knitr::include_graphics("image-7.png")
+```
 
 Overlap Across All DEGs (Table 4):
 
@@ -586,17 +598,18 @@ knitr::include_graphics("image-3.png")
 
 ##Interpretation and detailed view of results
 
-### Do the enrichment results support conclusions or mechanism discussed in the original paper? How do these results differ from the results you got from Assignment #2 thresholded methods? Can you find evidence, i.e. publications, to support some of the results that you see. How does this evidence support your result? 
+### Do the enrichment results support conclusions or mechanism discussed in the original paper? How do these results differ from the results you got from Assignment #2 thresholded methods? Can you find evidence, i.e. publications, to support some of the results that you see. How does this evidence support your result?
 
 Overall, the non‐thresholded GSEA results broadly support the key Crohn’s disease (CD) mechanisms reported in the SOURCE study (GSE233900) and align with the findings from Assignment 2 which align with some of the mechanisms discussed in the original paper. The original paper noted that there is a notable transcriptomic difference between Crohn's disease and Control samples [@braun_2024]. They noted increased inflammation and alterned nutrient absorbtion; in addition to changes in gut microbiome and other physiological differences[@braun_2024]. Aligning with this, both analyses highlight upregulated inflammatory pathways (e.g., TNF, IL‐17, Toll‐like receptor signaling) and a dampening of intestinal metabolic processes (e.g., lipid and vitamin absorption, bile secretion). The overlap between classical innate immune and adaptive immune activation pathways (e.g., Toll‐like receptor, TNF, chemokine signaling), as well as suppressed drug metabolism and nutrient absorption, parallels what the SOURCE authors observed with alternative methods such as WGCNA [@bamias_2021; @lu_2018].
 
 When comparing to the thresholded Over‐Representation Analysis (ORA) from Assignment 2 (where we only used genes passing a log fold‐change cutoff or an FDR < 0.05 cutoff), the results are consistent in highlighting similar pathways of interest. The main differences stem from GSEA examining the full ranked gene list rather than a binary “significant/not‐significant” set.
 
 ### Identifying “Dark Matter” Genes and Heatmaps
+
 ```{r}
 # ----- Load Normalized Expression Matrix -----
 # The file "data/A1_normalized_counts copy.RData" contains an object named 'final_normalized_counts'
-load("data/A1_normalized_counts copy.RData")  
+load("data/A1_normalized_counts copy.RData")
 norm_data <- final_normalized_counts
 
 # Read DE results (again for clarity)
@@ -611,7 +624,7 @@ enriched_gene_sets <- list(
 )
 pathway_genes <- unique(unlist(enriched_gene_sets))
 
-# Calculate all_annotated_genes from the GMT Annotation 
+# Calculate all_annotated_genes from the GMT Annotation
 # Define the path to your GMT file (downloaded or stored locally)
 gmt_file <- "data/Human_GOBP_AllPathways_noPFOCR_no_GO_iea_March_01_2025_symbol.gmt"
 
@@ -646,7 +659,7 @@ dark_matter_genes <- setdiff(sig_genes, pathway_genes)
 # (B) Dark matter relative to the entire annotation: genes that are DE but are not annotated in any gene set.
 dark_matter_genes_all <- setdiff(sig_genes, all_annotated_genes)
 
-# Generate Heatmap for Dark Matter Genes (Relative to Enriched Pathways) 
+# Generate Heatmap for Dark Matter Genes (Relative to Enriched Pathways)
 # Assuming 'norm_data' has gene symbols as rownames
 dark_matter_expr <- norm_data[rownames(norm_data) %in% dark_matter_genes, ]
 # Compute row z-scores for improved visualization
@@ -660,7 +673,7 @@ Heatmap(
   column_title = "Dark Matter Genes (Not in Enriched Pathways)"
 )
 
-# Generate Heatmap for Dark Matter Genes (Relative to Entire Annotation) 
+# Generate Heatmap for Dark Matter Genes (Relative to Entire Annotation)
 dark_matter_expr_all <- norm_data[rownames(norm_data) %in% dark_matter_genes_all, ]
 dark_matter_expr_all_z <- t(scale(t(dark_matter_expr_all)))
 
@@ -673,6 +686,5 @@ Heatmap(
 )
 
 ```
-
 
 # References
