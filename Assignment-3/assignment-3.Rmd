@@ -3,13 +3,13 @@ title: "Assignment 3"
 author: "Andrew Wong"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: true
-    toc_depth: "3"
   html_document:
     toc: true
     toc_depth: 3
     fig_caption: true
+  pdf_document:
+    toc: true
+    toc_depth: "3"
 bibliography: "assignment-3.bib"
 csl: "biomed-central.csl"
 ---
@@ -509,7 +509,7 @@ I have outlined the steps I used below for replication purposes.
 3. Run build Enrichment Map with the following parameters, an FDR q-value cutoff of 0.05, clicked AutoAnnotate (to create annotations automatically), and the rest are default parameters. Note default edge cutt off is 0.375.
 4. Click publication ready and download the png photo of the figure
 
-```{r fig.cap = "Parameters used to generate the Enrichment Map in Cytoscape for the gene set enrichment analysis (GSEA) comparing Crohn's disease (CD) versus control (CON) samples. The positive and negative enrichment results, gene set (GMT) file, and ranked gene list were manually loaded into Cytoscape using the EnrichmentMap app. The phenotype labels 'UP' and 'DOWN' correspond to gene sets enriched in CD and CON, respectively. This setup was used in place of RCy3, which was unavailable in the Docker-based R environment."}
+```{r fig.cap = "Parameters used to generate the Enrichment Map in Cytoscape for the gene set enrichment analysis (GSEA) comparing Crohn's disease (CD) versus control (CON) samples. The positive and negative enrichment results, gene set (GMT) file, and ranked gene list were manually loaded into Cytoscape using the EnrichmentMap app. The phenotype labels UP and DOWN correspond to gene sets enriched in CD and CON, respectively. This setup was used in place of RCy3, which was unavailable in the Docker-based R environment."}
 knitr::include_graphics("image-2.png")
 ```
 
@@ -534,7 +534,7 @@ The nodes and themes with few edges were kept in this illustration. We can remov
 
 For now, lets generate the theme network. This was done by clicking "Collapse All Clusters" to group gene sets with a single theme node.
 
-```{r fig.cap="Theme network summarizing the enrichment map for Crohn's disease (CD) versus control (CON) samples. Clusters of related gene sets were collapsed into single nodes using the 'Collapse All Clusters' option in the AutoAnnotate Cytoscape app, creating a high-level view of major biological themes enriched in the dataset. }
+```{r fig.cap="Theme network summarizing the enrichment map for Crohn's disease (CD) versus control (CON) samples. Clusters of related gene sets were collapsed into single nodes using the Collapse All Clusters option in the AutoAnnotate Cytoscape app, creating a high-level view of major biological themes enriched in the dataset."}
 knitr::include_graphics("data/CDvsCON_Theme_Network.png")
 ```
 
@@ -575,7 +575,7 @@ Below is a summary of which processes from the given list are most relevant to C
 
 ---
 
-# Processes Less Directly Linked
+### Processes Less Directly Linked
 
 - **Caspase-mediated cell death (central node)**  
   Apoptosis and pyroptosis can modulate epithelial and immune cell turnover, but are less specifically highlighted in Crohn’s compared to classic cytokine pathways.
@@ -592,19 +592,19 @@ Below is a summary of which processes from the given list are most relevant to C
 - **Transmission of nerve impulse / mitotic cycle, Localization to plasma membrane, Attachment of spindle to chromosome**  
   These core cellular processes are not as directly implicated in the pathophysiology of Crohn’s disease.
 
-```{r fig.cap="Truncated Theme network summarizing the enrichment map for Crohn's disease (CD) versus control (CON) samples. Clusters of related gene sets were collapsed into single nodes using the 'Collapse All Clusters' option in the AutoAnnotate Cytoscape app. }
+```{r fig.cap="Truncated Theme network summarizing the enrichment map for Crohn's disease (CD) versus control (CON) samples. Clusters of related gene sets were collapsed into single nodes using the 'Collapse All Clusters' option in the AutoAnnotate Cytoscape app."}
 knitr::include_graphics("image-3.png")
 ```
 
-##Interpretation and detailed view of results
+# Interpretation and detailed view of results
 
-### Do the enrichment results support conclusions or mechanism discussed in the original paper? How do these results differ from the results you got from Assignment #2 thresholded methods? Can you find evidence, i.e. publications, to support some of the results that you see. How does this evidence support your result?
+## Do the enrichment results support conclusions or mechanism discussed in the original paper? How do these results differ from the results you got from Assignment #2 thresholded methods? Can you find evidence, i.e. publications, to support some of the results that you see. How does this evidence support your result?
 
 Overall, the non‐thresholded GSEA results broadly support the key Crohn’s disease (CD) mechanisms reported in the SOURCE study (GSE233900) and align with the findings from Assignment 2 which align with some of the mechanisms discussed in the original paper. The original paper noted that there is a notable transcriptomic difference between Crohn's disease and Control samples [@braun_2024]. They noted increased inflammation and alterned nutrient absorbtion; in addition to changes in gut microbiome and other physiological differences[@braun_2024]. Aligning with this, both analyses highlight upregulated inflammatory pathways (e.g., TNF, IL‐17, Toll‐like receptor signaling) and a dampening of intestinal metabolic processes (e.g., lipid and vitamin absorption, bile secretion). The overlap between classical innate immune and adaptive immune activation pathways (e.g., Toll‐like receptor, TNF, chemokine signaling), as well as suppressed drug metabolism and nutrient absorption, parallels what the SOURCE authors observed with alternative methods such as WGCNA [@bamias_2021; @lu_2018].
 
 When comparing to the thresholded Over‐Representation Analysis (ORA) from Assignment 2 (where we only used genes passing a log fold‐change cutoff or an FDR < 0.05 cutoff), the results are consistent in highlighting similar pathways of interest. The main differences stem from GSEA examining the full ranked gene list rather than a binary “significant/not‐significant” set.
 
-### Identifying “Dark Matter” Genes and Heatmaps
+## Identifying “Dark Matter” Genes and Heatmaps
 
 ```{r}
 # ----- Load Normalized Expression Matrix -----
@@ -688,3 +688,4 @@ Heatmap(
 ```
 
 # References
+Credits to GitHub Copilot for code completions and comments.
